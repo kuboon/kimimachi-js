@@ -1,0 +1,14 @@
+{
+  "tasks": {
+    "check": "deno check ."
+  },
+  "compilerOptions": {
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "jsx": "react-jsx",
+    "jsxImportSource": "@remix-run/ui"
+  }
+}

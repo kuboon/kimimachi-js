@@ -1,0 +1,58 @@
+{
+  "tasks": {
+    "dev": "deno serve -P=dev --watch --port 8000 router.tsx",
+    "build": "deno run -c deno.json -P=build jsr:@remix-kbn/ssg/build.ts --out ../dist",
+    "check": "deno check ."
+  },
+  "permissions": {
+    "build": {
+      "read": [
+        "../.."
+      ],
+      "write": [
+        "../dist"
+      ],
+      "env": {
+        "allow": [
+          "BASE_URL"
+        ],
+        "ignore": [
+          "NODE_ENV",
+          "VSCODE_TEXTMATE_DEBUG"
+        ]
+      },
+      "import": true
+    },
+    "dev": {
+      "read": [
+        "../.."
+      ],
+      "env": {
+        "allow": [
+          "BASE_URL",
+          "PORT"
+        ],
+        "ignore": [
+          "NODE_ENV",
+          "VSCODE_TEXTMATE_DEBUG"
+        ]
+      },
+      "net": [
+        "0.0.0.0",
+        "127.0.0.1",
+        "localhost"
+      ],
+      "import": true
+    }
+  },
+  "compilerOptions": {
+    "lib": [
+      "deno.ns",
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "jsx": "react-jsx",
+    "jsxImportSource": "@remix-run/ui"
+  }
+}
