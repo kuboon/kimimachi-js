@@ -6,6 +6,7 @@ export interface Request {
   lat: number;
   lon: number;
   size: number;
+  height?: number;
   title?: string;
 }
 
@@ -20,12 +21,13 @@ const ctx = self as unknown as {
 };
 
 ctx.onmessage = async (e) => {
-  const { lat, lon, size, title } = e.data;
+  const { lat, lon, size, height, title } = e.data;
   try {
     const { map, tileset } = await generateMap({
       lat,
       lon,
       size,
+      height,
       title: title || undefined,
       log: (text) => ctx.postMessage({ type: "log", text }),
     });

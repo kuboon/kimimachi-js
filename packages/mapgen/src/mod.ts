@@ -26,3 +26,5 @@ export { reverseGeocode } from "./geocode.ts";
 export type { Address } from "./geocode.ts";
 export { KINDS } from "./abstract.ts";
 export type { RailAxis, RotateMode } from "./schematic.ts";
+export { GRID_DEG, gridCell, gridCellAt } from "./geo.ts";
+export type { GridCell } from "./geo.ts";
