@@ -3,28 +3,27 @@
 ブラウザで現在地を取得すると、その場所の地図データから「抽象化した地図」を作り、16px
 タイルのゲームマップに変換して、歩き回れるビューアで開きます。
 
-- `packages/mapgen/` — 変換ライブラリ（`@kuboon/kimimachi`、JSR 公開用）。Remix にも Deno にも依存しない純 TypeScript
-  で、依存パッケージはありません
-- `web/` — ブラウザで動く静的サイト。現在地の取得も地図の変換もブラウザの中（Web Worker）で行い、結果は IndexedDB
-  に保存します。サーバは要りません
+- `packages/mapgen/` — 変換ライブラリ（`@kuboon/kimimachi`、JSR 公開用）。Remix にも Deno にも依存しない純 TypeScript で、依存パッケージはありません
+- `web/` — Remix v3 の静的サイト（[remix3-ssg-gh-pages](https://github.com/kuboon/remix3-ssg-gh-pages) 由来の構成、`@remix-kbn/ssg` で GitHub Pages 向けに生成）。現在地の取得も地図の変換もブラウザの中（Web Worker）で行い、結果は IndexedDB に保存します。サーバは要りません
+  - `web/client/` — ブラウザに渡すものすべて（ページ、島、ルート、ゲームビューア、Worker）。`deno.ns` なしで型チェックされます
+  - `web/server/` — ルーター、バンドル、ビルド
 - `python/` — 元の Python 実装（地名検索つき CLI）。そのまま残してあります（[python/README.md](python/README.md)）
 
 ## 使い方（Web）
 
 ```bash
-deno task dev        # ビルドして http://127.0.0.1:8891 で配信
+deno task dev        # 開発サーバ http://localhost:8000
 deno task build      # web/dist/ に静的ファイルを出力
 ```
 
-トップページの「📍 現在地からマップを作る」を押すと、ブラウザの Geolocation
-で緯度経度を取り、その場で生成して、歩き回れるビューア（`viewer.html#<id>`）を開きます。
+トップページの「📍 現在地からマップを作る」を押すと、ブラウザの Geolocation で緯度経度を取り、その場で生成して、歩き回れるビューア（`/viewer#<id>`）を開きます。
 位置情報が使えないときは、座標を直接入力することもできます。
 
-- 地図データ（国土地理院・PLATEAU）はブラウザが直接取得します。国土地理院は CORS を許可しています。PLATEAU が取得できないとき（CORS
-  など）は、自動で地理院だけで生成します
+- 地図データ（国土地理院・PLATEAU）はブラウザが直接取得します。国土地理院は CORS を許可しています。PLATEAU が取得できないとき（CORS など）は、自動で地理院だけで生成します
 - 生成したマップはそのブラウザの IndexedDB にだけ保存されます。一覧から画像・Tiled(.tmj)・タイルセット・JSON を書き出せます
 - 日本国外の座標は受け付けません。範囲は 300〜3000m（ブラウザのメモリと処理時間のため）
-- `web/dist/` は静的ファイルだけなので、Cloudflare Pages（または R2 + カスタムドメイン）などにそのまま置けます
+- ビューアは島（island）ではなく、そのページ専用のスクリプト（`web/client/viewer/entry.js`）で動きます。一覧からビューアへは、ランタイムに横取りされないよう文書として遷移します（`web/client/navigation-guard.ts`）
+- 静的ファイルだけなので、どのホスティングにも置けます。GitHub Pages へは `.github/workflows/pages.yml` が、`main` をルートに、PR を PR ごとのサブパスにデプロイし、プレビュー URL を PR にコメントします（Settings → Pages → Source を GitHub Actions にしてください）。Cloudflare Pages などへは `web/dist/` をそのまま置けます
 
 ## 使い方（ライブラリ）
 

@@ -1,22 +1,24 @@
 {
   "workspace": [
     "./packages/mapgen",
-    "./web"
+    "./web/client",
+    "./web/server"
   ],
   "tasks": {
-    "dev": "deno task --cwd web dev",
-    "build": "deno task --cwd web build",
-    "test": "deno test -P",
-    "check": "deno check && deno lint && deno fmt --check"
+    "dev": "deno task --cwd web/server dev",
+    "build": "deno task --cwd web/server build",
+    "test": "deno test packages",
+    "check": "deno task --cwd packages/mapgen check && deno task --cwd web/client check && deno task --cwd web/server check && deno lint && deno fmt --check"
   },
   "nodeModulesDir": "auto",
   "fmt": {
     "lineWidth": 140,
+    "proseWrap": "preserve",
     "exclude": [
       "python/",
-      "web/viewer.html",
-      "web/viewer.js",
       "web/dist/",
+      "web/client/viewer/",
+      "node_modules",
       ".data/"
     ]
   },
@@ -24,6 +26,7 @@
     "exclude": [
       "python/",
       "web/dist/",
+      "node_modules",
       ".data/"
     ]
   },
@@ -31,5 +34,25 @@
     "python/",
     ".data/",
     "web/dist/"
-  ]
+  ],
+  "unstable": [
+    "bundle"
+  ],
+  "minimumDependencyAge": {
+    "age": "P1D",
+    "exclude": [
+      "jsr:@kuboon/*",
+      "jsr:@remix-kbn/*",
+      "npm:@remix-run/*"
+    ]
+  },
+  "imports": {
+    "@kuboon/kimimachi": "./packages/mapgen/src/mod.ts",
+    "@std/assert": "jsr:@std/assert@^1.0.19",
+    "@remix-run/fetch-router": "npm:@remix-run/fetch-router@^0.22.2",
+    "@remix-run/render-middleware": "npm:@remix-run/render-middleware@^0.3.2",
+    "@remix-run/ui": "npm:@remix-run/ui@^0.11.0",
+    "@remix-kbn/assets-deno": "jsr:@remix-kbn/assets-deno@^0.8.0",
+    "@remix-kbn/ssg": "jsr:@remix-kbn/ssg@^0.12.0"
+  }
 }

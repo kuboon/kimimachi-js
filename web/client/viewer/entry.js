@@ -1,10 +1,10 @@
 // deno-lint-ignore-file
-import { getMap } from "./db.ts";
+import { getMap } from "../db.ts";
 
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const rec = await getMap(location.hash.slice(1));
 if (!rec) {
-  document.body.innerHTML = '<p style="padding:24px;color:#f4f1e8">このマップはこのブラウザに保存されていません。<a style="color:#f2c14e" href="./">一覧へ戻る</a></p>';
+  document.body.innerHTML = '<p style="padding:24px;color:#f4f1e8">このマップはこのブラウザに保存されていません。<a style="color:#f2c14e" href="'+(document.querySelector('meta[name=rmx-base]')?.content ?? "")+'/">一覧へ戻る</a></p>';
   throw new Error("map not found");
 }
 const MAP = rec.map;
