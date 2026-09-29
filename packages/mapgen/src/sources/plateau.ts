@@ -1,5 +1,6 @@
 /** Project PLATEAU: land use (luse) and road (tran) vector tiles from the PLATEAU data catalog. */
 import { type Frame, mercToLonlat, type Pt } from "../geo.ts";
+import { type Address, reverseGeocode } from "../geocode.ts";
 import { type Fetcher, fetchJson, fetchMany } from "../net.ts";
 import {
   BARE,
@@ -23,7 +24,6 @@ import {
 } from "../raster.ts";
 
 const CATALOG_URL = "https://api.plateau.reearth.io/datacatalog/plateau-datasets";
-const REVGEO_URL = "https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToAddress";
 const Z = 16;
 
 /** luse:class_code -> semantic class */
@@ -68,20 +68,6 @@ interface CatalogEntry {
   city?: string;
   year?: number | string;
   url: string;
-}
-
-export interface Address {
-  muniCd?: string;
-  lv01Nm?: string;
-}
-
-/** 国土地理院の逆ジオコーダ: 市区町村コードと町丁目名。 */
-export async function reverseGeocode(fetcher: Fetcher, lat: number, lon: number): Promise<Address> {
-  const res = await fetchJson<{ results?: Address }>(fetcher, REVGEO_URL, {
-    lat: lat.toFixed(5),
-    lon: lon.toFixed(5),
-  });
-  return res?.results ?? {};
 }
 
 /** Municipality codes (e.g. '13101') found on an n x n grid of points over the frame. */

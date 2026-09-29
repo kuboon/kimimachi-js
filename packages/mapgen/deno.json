@@ -2,7 +2,10 @@
   "name": "@kuboon/kimimachi",
   "version": "0.1.0",
   "license": "UNLICENSED",
-  "exports": "./src/mod.ts",
+  "exports": {
+    ".": "./src/mod.ts",
+    "./geocode": "./src/geocode.ts"
+  },
   "publish": {
     "include": [
       "src/**/*.ts",

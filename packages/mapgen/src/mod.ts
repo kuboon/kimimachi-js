@@ -22,6 +22,7 @@ export type { GameMap, MapLabel, MapMeta } from "./export.ts";
 export { renderMap, T as TILE_SIZE } from "./tileset.ts";
 export type { Image } from "./tileset.ts";
 export { encodePng } from "./png.ts";
-export { reverseGeocode } from "./sources/plateau.ts";
+export { reverseGeocode } from "./geocode.ts";
+export type { Address } from "./geocode.ts";
 export { KINDS } from "./abstract.ts";
 export type { RailAxis, RotateMode } from "./schematic.ts";
