@@ -229,31 +229,27 @@ function render() {
   if (fx) swirl();
 }
 
-// ---- 隣のブロックへ: swirl out (ドラクエの渦) -> Loading -> generate/load the neighbour -> swirl in
-const SWIRL_SEC = 0.9;
-let fx = null; // { mode: "out" | "wait" | "in", p: 0..1 (0 = picture, 1 = black), snap }
-const snap = document.createElement("canvas");
+// ---- 隣のブロックへ: spiral out (ファミコン風の渦) -> Loading -> generate/load the neighbour -> swirl in
+const SWIRL_SEC = 0.8;
+let fx = null; // { mode: "out" | "wait" | "in", p: 0..1 (0 = picture, 1 = black)}
 const loadingEl = document.getElementById("loading"), logEl = document.getElementById("loading-log");
-const ease = p => p * p * (3 - 2 * p);
 
-/** Draws the screen (copied to `snap`) twisted into a spiral that closes on the player at progress fx.p. */
+/**
+ * ファミコン風の渦: the picture stays put and is blotted out in coarse black blocks, in a spiral that
+ * closes on the player (fx.p: 0 = picture, 1 = black). Drawn over the game, so nothing to copy or rotate.
+ */
 function swirl() {
-  const w = cv.width, h = cv.height, cx = w / 2, cy = h / 2, R = Math.hypot(cx, cy);
-  if (fx.mode === "in" || !fx.snapped) { snap.width = w; snap.height = h; snap.getContext("2d").drawImage(cv, 0, 0); fx.snapped = true; }
-  const p = ease(fx.p), visible = R * (1 - p), N = 48;
-  ctx.fillStyle = "#000"; ctx.fillRect(0, 0, w, h);
-  for (let i = 0; i < N; i++) {
-    const r0 = R * i / N, r1 = Math.min(R * (i + 1) / N + 1, visible);
-    if (r0 >= visible) break;
-    ctx.save();
-    ctx.beginPath(); ctx.arc(cx, cy, r1, 0, Math.PI * 2); ctx.arc(cx, cy, r0, 0, Math.PI * 2, true); ctx.clip("evenodd");
-    ctx.translate(cx, cy); ctx.rotate(p * 7 * (1 - r0 / R) ** 2 * Math.PI);
-    ctx.drawImage(snap, -cx, -cy);
-    ctx.restore();
+  const dpr = devicePixelRatio || 1, B = Math.round(16 * dpr), w = cv.width, h = cv.height, cx = w / 2, cy = h / 2, R = Math.hypot(cx, cy);
+  ctx.fillStyle = "#000";
+  for (let y = 0; y < h; y += B) for (let x = 0; x < w; x += B) {
+    const dx = x + B / 2 - cx, dy = y + B / 2 - cy, r = Math.hypot(dx, dy) / R;
+    // outer blocks go first; within a ring the angle staggers them, which makes the spiral arm
+    const v = 0.4 * (1 - r) + 0.6 * ((Math.atan2(dy, dx) / (2 * Math.PI) + 2 * r + 1) % 1);
+    if (v <= fx.p) ctx.fillRect(x, y, B, B);
   }
 }
 const tween = (mode, from, to) => new Promise(resolve => {
-  fx = { mode, p: from, snapped: false }; const t0 = performance.now(), me = fx;
+  fx = { mode, p: from }; const t0 = performance.now(), me = fx;
   const step = now => {
     if (fx !== me) return resolve();
     me.p = from + (to - from) * Math.min(1, (now - t0) / 1000 / SWIRL_SEC);
@@ -293,7 +289,7 @@ async function leaveThrough(d) {
   placePlayer(x, y); player.dir = d;
   history.replaceState(null, "", "#" + r.rec.id);
   setPanel(false);
-  fx = { mode: "in", p: 1, snapped: false };
+  fx = { mode: "in", p: 1 };
   await tween("in", 1, 0);
   fx = null; leaving = false;
 }

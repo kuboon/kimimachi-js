@@ -11,7 +11,7 @@ description: kimimachi の仕組みと、地図データの出典・利用条件
 
 ## フォーク元
 
-このプロジェクトは [shi3z/kimimachi](https://github.com/shi3z/kimimachi) のフォークです。元の Python 実装の発想をもとに、ブラウザの中だけで動くように作り直しています。このリポジトリは [kuboon/kimimachi-js](https://github.com/kuboon/kimimachi-js) です。
+このプロジェクトは [shi3z/kimimachi](https://github.com/shi3z/kimimachi) の Python 版を fork して TypeScript に書き換え、ブラウザ上ですべて生成するようにしました。このリポジトリは [kuboon/kimimachi-js](https://github.com/kuboon/kimimachi-js) です。
 
 ## 出典・利用データ
 
