@@ -143,11 +143,17 @@ export async function generateMap(o: GenerateOptions): Promise<GeneratedMap> {
       gsi.drawWater(rast, gfeats);
       if (!schematic) gsi.drawRoads(rast, roads, true); // outside PLATEAU coverage
       const nLuse = await plateau.drawLanduse(fetcher, rast, ds, src, !schematic);
-      const nTran = schematic ? 0 : await plateau.drawRoads(fetcher, rast, ds, src);
-      log(`   土地利用 ${nLuse} 面, 道路 ${nTran} 面`);
-      gsi.drawBuildings(rast, gfeats);
-      drawNetwork(0);
-      attributions.push(ds.attribution, gsi.ATTRIBUTION);
+      if (nLuse === 0) { // every land-use tile failed to load (e.g. blocked): don't claim PLATEAU as a source
+        log("⚠  PLATEAU の土地利用タイルを取得できないため gsi ソースで生成します");
+        source = "gsi";
+        city = null;
+      } else {
+        const nTran = schematic ? 0 : await plateau.drawRoads(fetcher, rast, ds, src);
+        log(`   土地利用 ${nLuse} 面, 道路 ${nTran} 面`);
+        gsi.drawBuildings(rast, gfeats);
+        drawNetwork(0);
+        attributions.push(ds.attribution, gsi.ATTRIBUTION);
+      }
     }
   }
   if (source === "gsi") {

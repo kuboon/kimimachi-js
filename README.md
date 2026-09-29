@@ -5,23 +5,26 @@
 
 - `packages/mapgen/` — 変換ライブラリ（`@kuboon/kimimachi`、JSR 公開用）。Remix にも Deno にも依存しない純 TypeScript
   で、依存パッケージはありません
-- `server/` — Deno + Remix v3（`@remix-run/fetch-router`）の Web サーバ。生成ジョブとビューアの配信
+- `web/` — ブラウザで動く静的サイト。現在地の取得も地図の変換もブラウザの中（Web Worker）で行い、結果は IndexedDB
+  に保存します。サーバは要りません
 - `python/` — 元の Python 実装（地名検索つき CLI）。そのまま残してあります（[python/README.md](python/README.md)）
 
-## 使い方（サーバ）
+## 使い方（Web）
 
 ```bash
-deno task --cwd server serve        # http://localhost:8891
+deno task dev        # ビルドして http://127.0.0.1:8891 で配信
+deno task build      # web/dist/ に静的ファイルを出力
 ```
 
-トップページの「📍 現在地からマップを作る」を押すと、ブラウザの Geolocation で緯度経度を取り、`POST /api/generate` でジョブを登録します。
-`GET /api/jobs/<id>` で進捗を見て、終わるとビューア（`/maps/<id>`）を開きます。位置情報が使えないときは、座標を直接入力することもできます。
+トップページの「📍 現在地からマップを作る」を押すと、ブラウザの Geolocation
+で緯度経度を取り、その場で生成して、歩き回れるビューア（`viewer.html#<id>`）を開きます。
+位置情報が使えないときは、座標を直接入力することもできます。
 
-- 生成物は `.data/out/<id>/`、取得した地図データのキャッシュは `.data/cache/`（場所は環境変数 `KIMIMACHI_DATA` で変更）
-- 地図データが日本のものなので、日本国外の座標は受け付けません
-- ジョブは 1 つずつ順に実行します
-- 権限は `server/deno.json` の
-  `permissions`（通信先ホスト・読み書きするパス）に絞ってあります。データ元のホストを増やすときはここに追加してください
+- 地図データ（国土地理院・PLATEAU）はブラウザが直接取得します。国土地理院は CORS を許可しています。PLATEAU が取得できないとき（CORS
+  など）は、自動で地理院だけで生成します
+- 生成したマップはそのブラウザの IndexedDB にだけ保存されます。一覧から画像・Tiled(.tmj)・タイルセット・JSON を書き出せます
+- 日本国外の座標は受け付けません。範囲は 300〜3000m（ブラウザのメモリと処理時間のため）
+- `web/dist/` は静的ファイルだけなので、Cloudflare Pages（または R2 + カスタムドメイン）などにそのまま置けます
 
 ## 使い方（ライブラリ）
 
@@ -47,14 +50,13 @@ const png = await encodePng(renderMap(Int32Array.from(map.tileGrid), map.width, 
 4. **タイル化** — 手続き生成の 16px タイルセットで、水・道路・線路・森・建物を 4 近傍マスクでオートタイル。45°
    の道は斜めパーツを重ね描き用レイヤーに置く
 
-## 出力（`.data/out/<id>/`）
+## 出力（一覧から書き出し）
 
-| ファイル                            | 内容                                                                                                                          |
-| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `map.json`                          | ゲーム用の簡易データ（kindGrid, tileGrid, overlayGrid, labels, blockingKinds, meta）                                          |
-| `map.tmj` + `tileset.png`           | Tiled 形式（`ground` と、斜めパーツ用の `overlay` の2レイヤー。タイルに `kind` / `collides` プロパティ、地名は object layer） |
-| `map.png`                           | マップ全体の画像                                                                                                              |
-| `semantic_map.png` / `abstract.png` | 中間画像（意味画像 / 1マス=4px の種別画像）                                                                                   |
+| ファイル                  | 内容                                                                                                                          |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `map.json`                | ゲーム用の簡易データ（kindGrid, tileGrid, overlayGrid, labels, blockingKinds, meta）                                          |
+| `map.tmj` + `tileset.png` | Tiled 形式（`ground` と、斜めパーツ用の `overlay` の2レイヤー。タイルに `kind` / `collides` プロパティ、地名は object layer） |
+| `map.png`                 | マップ全体の画像                                                                                                              |
 
 ## 開発
 
@@ -71,7 +73,7 @@ Python 版からの変更点:
 
 ## 出典・利用データ
 
-このツールが生成するマップ（`.data/out/<id>/` の PNG・`map.tmj`・`map.json`）は、以下のデータを**加工して作成**したものです。
+このツールが生成するマップ（書き出した PNG・`map.tmj`・`map.json`）は、以下のデータを**加工して作成**したものです。
 マップを公開・配布するときは、ここに書いた出典と、加工したことを必ず表示してください。
 生成したマップには出典が自動で入ります（ビューアの右下、`map.json` の `meta.attribution`、`map.tmj` の map プロパティ）。
 

@@ -147,6 +147,8 @@ async function load(fetcher: Fetcher, url: string, frame: Frame): Promise<Featur
   const blobs = await fetchMany(
     fetcher,
     tiles.map(([z, x, y]) => url.replace("{z}", String(z)).replace("{x}", String(x)).replace("{y}", String(y))),
+    8,
+    true,
   );
   const feats: Feature[] = [];
   for (let i = 0; i < tiles.length; i++) feats.push(...await mvtFeatures(blobs[i], tiles[i][0], tiles[i][1], tiles[i][2], frame));

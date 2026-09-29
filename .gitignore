@@ -4,3 +4,4 @@ __pycache__/
 out/
 .data/
 node_modules/
+web/dist/

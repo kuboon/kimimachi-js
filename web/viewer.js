@@ -1,45 +1,14 @@
-<!doctype html>
-<html lang="ja">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ピクセルマップ</title>
-<style>
-  :root { --bg: #16161d; --panel: rgba(20, 20, 28, .82); --text: #f4f1e8; --muted: #b8b4a8; --accent: #f2c14e; }
-  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); overflow: hidden;
-    font-family: "DotGothic16", "Hiragino Kaku Gothic ProN", "Noto Sans JP", system-ui, sans-serif; }
-  canvas { display: block; image-rendering: pixelated; }
-  #game { position: fixed; inset: 0; width: 100vw; height: 100vh; }
-  .hud { position: fixed; left: 12px; top: 12px; background: var(--panel); border: 2px solid #000;
-    box-shadow: inset 0 0 0 2px #5a5668; padding: 8px 12px; border-radius: 6px; font-size: 14px; line-height: 1.5; max-width: calc(100vw - 48px); }
-  .hud b { color: var(--accent); font-weight: normal; }
-  .hud small { color: var(--muted); display: block; font-size: 11px; }
-  #mini { position: fixed; right: 12px; top: 12px; border: 2px solid #000; box-shadow: 0 0 0 2px #5a5668; background: #000; }
-  .help { position: fixed; left: 12px; bottom: 12px; background: var(--panel); padding: 6px 10px; border-radius: 6px; font-size: 12px; color: var(--muted); }
-  .attr { position: fixed; right: 8px; bottom: 6px; font-size: 10px; color: var(--muted); text-shadow: 0 1px 0 #000; }
-  #pad { position: fixed; right: 20px; bottom: 28px; width: 150px; height: 150px; display: none; touch-action: none; }
-  #pad button { position: absolute; width: 50px; height: 50px; border: 2px solid #000; border-radius: 8px;
-    background: rgba(40, 40, 52, .8); color: var(--text); font-size: 20px; touch-action: none; }
-  @media (pointer: coarse) { #pad { display: block; } .help { display: none; } }
-</style>
-</head>
-<body>
-<canvas id="game"></canvas>
-<canvas id="mini"></canvas>
-<div class="hud" id="hud"></div>
-<div class="help">矢印/WASD: 移動　Shift: 走る　M: ミニマップ　+/-: ズーム</div>
-<div class="attr" id="attr"></div>
-<div id="pad">
-  <button data-d="up" style="left:50px;top:0">▲</button>
-  <button data-d="left" style="left:0;top:50px">◀</button>
-  <button data-d="right" style="left:100px;top:50px">▶</button>
-  <button data-d="down" style="left:50px;top:100px">▼</button>
-</div>
-<script type="module">
-const BASE = location.pathname.replace(/\/?$/, "/");
-const MAP = await (await fetch(BASE + "map.json")).json();
-document.title = MAP.meta.place + " ピクセルマップ";
+// deno-lint-ignore-file
+import { getMap } from "./db.ts";
+
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const rec = await getMap(location.hash.slice(1));
+if (!rec) {
+  document.body.innerHTML = '<p style="padding:24px;color:#f4f1e8">このマップはこのブラウザに保存されていません。<a style="color:#f2c14e" href="./">一覧へ戻る</a></p>';
+  throw new Error("map not found");
+}
+const MAP = rec.map;
+document.title = MAP.meta.place + " ピクセルマップ";
 const TS = MAP.tileSize, COLS = MAP.width, ROWS = MAP.height;
 const KIND_JA = { grass: "草地", forest: "森", paddy: "田んぼ", field: "畑", water: "川・水辺", road: "道路", bridge: "橋",
   rail: "線路", rail_bridge: "鉄橋", crossing: "踏切", park: "公園", parking: "駐車場", yard: "住宅地", plaza: "広場・敷地",
@@ -51,7 +20,7 @@ const walkable = (x, y) => { const k = kindAt(x, y); return k >= 0 && !blocking.
 
 const cv = document.getElementById("game"), ctx = cv.getContext("2d");
 const mini = document.getElementById("mini"), mctx = mini.getContext("2d");
-const tiles = new Image(); tiles.src = BASE + "tileset.png";
+const tiles = new Image(); tiles.src = URL.createObjectURL(rec.tileset);
 let zoom = Math.max(2, Math.round(Math.min(innerWidth, innerHeight) / 300));
 let showMini = true;
 
@@ -225,6 +194,3 @@ function render() {
 let last = performance.now();
 function loop(now) { const dt = Math.min(.05, (now - last) / 1000); last = now; update(dt); render(); requestAnimationFrame(loop); }
 tiles.onload = () => requestAnimationFrame(loop);
-</script>
-</body>
-</html>

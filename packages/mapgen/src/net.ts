@@ -31,14 +31,20 @@ export async function fetchJson<T = unknown>(
 }
 
 /** Run fetcher over urls with a concurrency limit, keeping order. */
-export async function fetchMany(fetcher: Fetcher, urls: string[], workers = 8): Promise<(Uint8Array | null)[]> {
+export async function fetchMany(
+  fetcher: Fetcher,
+  urls: string[],
+  workers = 8,
+  /** treat a failed request as a missing tile (null) instead of failing the whole batch */
+  tolerant = false,
+): Promise<(Uint8Array | null)[]> {
   const out: (Uint8Array | null)[] = new Array(urls.length).fill(null);
   let next = 0;
   await Promise.all(
     Array.from({ length: Math.min(workers, urls.length) }, async () => {
       while (next < urls.length) {
         const i = next++;
-        out[i] = await fetcher(urls[i]);
+        out[i] = tolerant ? await fetcher(urls[i]).catch(() => null) : await fetcher(urls[i]);
       }
     }),
   );

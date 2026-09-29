@@ -1,0 +1,17 @@
+{
+  "tasks": {
+    "build": "deno bundle --platform browser --minify --outdir dist index.ts worker.ts viewer.js && cp index.html viewer.html dist/",
+    "dev": "deno task build && deno run -P serve.ts"
+  },
+  "imports": {
+    "@kuboon/kimimachi": "../packages/mapgen/src/mod.ts",
+    "@std/http": "jsr:@std/http@^1.0.0"
+  },
+  "compilerOptions": { "lib": ["deno.window", "dom"] },
+  "permissions": {
+    "default": {
+      "net": ["127.0.0.1:8891"],
+      "read": ["./dist"]
+    }
+  }
+}

@@ -1,10 +1,11 @@
 {
   "workspace": [
     "./packages/mapgen",
-    "./server"
+    "./web"
   ],
   "tasks": {
-    "dev": "deno task --cwd server dev",
+    "dev": "deno task --cwd web dev",
+    "build": "deno task --cwd web build",
     "test": "deno test -P",
     "check": "deno check && deno lint && deno fmt --check"
   },
@@ -13,18 +14,22 @@
     "lineWidth": 140,
     "exclude": [
       "python/",
-      "server/viewer.html",
+      "web/viewer.html",
+      "web/viewer.js",
+      "web/dist/",
       ".data/"
     ]
   },
   "lint": {
     "exclude": [
       "python/",
+      "web/dist/",
       ".data/"
     ]
   },
   "exclude": [
     "python/",
-    ".data/"
+    ".data/",
+    "web/dist/"
   ]
 }
