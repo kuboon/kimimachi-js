@@ -98,6 +98,22 @@ export const Generator = clientEntry(
         worker.postMessage(req);
       });
 
+    /** Fills the coordinate fields from the device's position, so they can be adjusted before generating. */
+    async function locate(form: HTMLFormElement) {
+      busy = true;
+      show("現在地を取得中…");
+      try {
+        const c = await position();
+        (form.elements.namedItem("lat") as HTMLInputElement).value = c.latitude.toFixed(6);
+        (form.elements.namedItem("lon") as HTMLInputElement).value = c.longitude.toFixed(6);
+        show("現在地を入力しました。必要なら座標を調整して「この座標で作る」を押してください。");
+      } catch (err) {
+        show((err as Error).message, true);
+      }
+      busy = false;
+      void handle.update();
+    }
+
     async function go(form: HTMLFormElement, getLatLon: () => Promise<[number, number]>) {
       busy = true;
       void handle.update();
@@ -154,44 +170,37 @@ export const Generator = clientEntry(
           ]}
         >
           <label mix={labelStyle}>
+            マップ名 (任意)
+            <input mix={[inputStyle, wideStyle]} name="title" placeholder="住所から自動" />
+          </label>
+          <div mix={coordsStyle}>
+            <label mix={labelStyle}>
+              緯度
+              <input mix={inputStyle} name="lat" type="number" step="any" placeholder="37.4463" />
+            </label>
+            <label mix={labelStyle}>
+              経度
+              <input mix={inputStyle} name="lon" type="number" step="any" placeholder="138.8514" />
+            </label>
+            <button
+              type="button"
+              disabled={busy}
+              mix={[
+                secondaryButtonStyle,
+                on("click", (event) => {
+                  const form = (event.currentTarget as HTMLButtonElement).form!;
+                  void locate(form);
+                }),
+              ]}
+            >
+              📍 現在地を取得
+            </button>
+            <button type="submit" disabled={busy} mix={buttonStyle}>この座標で作る</button>
+          </div>
+          <label mix={labelStyle}>
             範囲 (m)
             <input mix={inputStyle} name="size" type="number" defaultValue="1500" min="300" max="3000" step="100" />
           </label>
-          <label mix={labelStyle}>
-            マップ名 (任意)
-            <input mix={inputStyle} name="title" placeholder="住所から自動" />
-          </label>
-          <button
-            type="button"
-            disabled={busy}
-            mix={[
-              buttonStyle,
-              on("click", (event) => {
-                const form = (event.currentTarget as HTMLButtonElement).form!;
-                void go(form, async () => {
-                  show("現在地を取得中…");
-                  const c = await position();
-                  return [c.latitude, c.longitude];
-                });
-              }),
-            ]}
-          >
-            📍 現在地からマップを作る
-          </button>
-          <details mix={detailsStyle}>
-            <summary>座標を直接入力</summary>
-            <div mix={rowStyle}>
-              <label mix={labelStyle}>
-                緯度
-                <input mix={inputStyle} name="lat" type="number" step="any" placeholder="37.4463" />
-              </label>
-              <label mix={labelStyle}>
-                経度
-                <input mix={inputStyle} name="lon" type="number" step="any" placeholder="138.8514" />
-              </label>
-              <button type="submit" disabled={busy} mix={buttonStyle}>この座標で作る</button>
-            </div>
-          </details>
         </form>
 
         {status ? <pre mix={[statusStyle, failed ? errorStyle : undefined]}>{status}</pre> : null}
@@ -243,9 +252,9 @@ export const Generator = clientEntry(
 
 const formStyle = css({
   display: "flex",
-  flexWrap: "wrap",
-  gap: "0.75rem",
-  alignItems: "end",
+  flexDirection: "column",
+  gap: "1rem",
+  alignItems: "start",
   padding: "1rem",
   background: color.card,
   border: `1px solid ${color.border}`,
@@ -276,9 +285,20 @@ const buttonStyle = css({
   "&:disabled": { opacity: 0.5, cursor: "default" },
 });
 
-const detailsStyle = css({ width: "100%", color: color.muted, fontSize: "0.85rem" });
+const coordsStyle = css({ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "end" });
 
-const rowStyle = css({ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "end", marginTop: "0.6rem" });
+const wideStyle = css({ width: "100%", maxWidth: "20rem" });
+
+const secondaryButtonStyle = css({
+  font: "inherit",
+  cursor: "pointer",
+  padding: "0.55rem 1rem",
+  border: `1px solid ${color.accent}`,
+  borderRadius: radius.md,
+  background: "transparent",
+  color: color.accent,
+  "&:disabled": { opacity: 0.5, cursor: "default" },
+});
 
 const statusStyle = css({
   whiteSpace: "pre-wrap",
