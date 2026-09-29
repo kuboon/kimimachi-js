@@ -1,11 +1,32 @@
 {
   "tasks": {
-    "dev": "deno serve --allow-net --allow-read --allow-write --allow-env --watch ./router.ts",
-    "serve": "deno serve --allow-net --allow-read --allow-write --allow-env --port 8891 ./router.ts"
+    "dev": "deno serve -P --watch --host 127.0.0.1 --port 8891 ./router.ts",
+    "serve": "deno serve -P --host 127.0.0.1 --port 8891 ./router.ts"
   },
   "imports": {
     "@kuboon/kimimachi": "../packages/mapgen/src/mod.ts",
     "@remix-run/fetch-router": "npm:@remix-run/fetch-router@0.18.2",
     "@std/assert": "jsr:@std/assert@^1.0.19"
+  },
+  "permissions": {
+    "default": {
+      "net": [
+        "127.0.0.1:8891",
+        "cyberjapandata.gsi.go.jp",
+        "mreversegeocoder.gsi.go.jp",
+        "api.plateau.reearth.io",
+        "assets.cms.plateau.reearth.io"
+      ],
+      "read": [
+        "./viewer.html",
+        "../.data"
+      ],
+      "write": [
+        "../.data"
+      ],
+      "env": [
+        "KIMIMACHI_DATA"
+      ]
+    }
   }
 }
