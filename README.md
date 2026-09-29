@@ -20,7 +20,8 @@ deno task --cwd server serve        # http://localhost:8891
 - 生成物は `.data/out/<id>/`、取得した地図データのキャッシュは `.data/cache/`（場所は環境変数 `KIMIMACHI_DATA` で変更）
 - 地図データが日本のものなので、日本国外の座標は受け付けません
 - ジョブは 1 つずつ順に実行します
-- 権限は `server/deno.json` の `permissions`（通信先ホスト・読み書きするパス）に絞ってあります。データ元のホストを増やすときはここに追加してください
+- 権限は `server/deno.json` の
+  `permissions`（通信先ホスト・読み書きするパス）に絞ってあります。データ元のホストを増やすときはここに追加してください
 
 ## 使い方（ライブラリ）
 
