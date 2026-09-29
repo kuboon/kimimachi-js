@@ -20,7 +20,7 @@ deno task build      # web/dist/ に静的ファイルを出力
 座標は「📍 現在地を取得」でブラウザの Geolocation から入力でき、そのあと調整できます（直接入力も可）。
 
 - 地図データ（国土地理院・PLATEAU）はブラウザが直接取得します。国土地理院は CORS を許可しています。PLATEAU が取得できないとき（CORS など）は、自動で地理院だけで生成します
-- 生成したマップはそのブラウザの IndexedDB にだけ保存されます。一覧から画像・Tiled(.tmj)・タイルセット・JSON を書き出せます
+- 生成したマップはそのブラウザの IndexedDB にだけ保存され、他の利用者からは見えません。一覧から画像・Tiled(.tmj)・タイルセット・JSON を書き出せます
 - 日本国外の座標は受け付けません。範囲は 300〜3000m（ブラウザのメモリと処理時間のため）
 - ビューアは島（island）ではなく、そのページ専用のスクリプト（`web/client/viewer/entry.js`）で動きます。一覧からビューアへは、ランタイムに横取りされないよう文書として遷移します（`web/client/navigation-guard.ts`）
 - 静的ファイルだけなので、どのホスティングにも置けます。GitHub Pages へは `.github/workflows/pages.yml` が、`main` をルートに、PR を PR ごとのサブパスにデプロイし、プレビュー URL を PR にコメントします（Settings → Pages → Source を GitHub Actions にしてください）。Cloudflare Pages などへは `web/dist/` をそのまま置けます

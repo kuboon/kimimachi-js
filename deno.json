@@ -53,6 +53,8 @@
     "@remix-run/render-middleware": "npm:@remix-run/render-middleware@^0.3.2",
     "@remix-run/ui": "npm:@remix-run/ui@^0.11.0",
     "@remix-kbn/assets-deno": "jsr:@remix-kbn/assets-deno@^0.8.0",
-    "@remix-kbn/ssg": "jsr:@remix-kbn/ssg@^0.12.0"
+    "@remix-kbn/ssg": "jsr:@remix-kbn/ssg@^0.12.0",
+    "@kuboon/md": "jsr:@kuboon/md@^0.7.0",
+    "@std/front-matter": "jsr:@std/front-matter@^1.0.9"
   }
 }
