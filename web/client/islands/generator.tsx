@@ -186,6 +186,8 @@ export const Generator = clientEntry(
     return () => (
       <div>
         <form
+          // Coordinates are checked in `go()`; native validation would flag a 6-digit value as a step mismatch.
+          noValidate
           mix={[
             formStyle,
             on("submit", (event) => {
@@ -235,7 +237,7 @@ export const Generator = clientEntry(
                 ]}
                 name="lat"
                 type="number"
-                step="any"
+                step="0.001"
                 placeholder="37.4463"
               />
             </label>
@@ -248,7 +250,7 @@ export const Generator = clientEntry(
                 ]}
                 name="lon"
                 type="number"
-                step="any"
+                step="0.001"
                 placeholder="138.8514"
               />
             </label>
