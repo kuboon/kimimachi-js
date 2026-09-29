@@ -103,6 +103,8 @@ addEventListener("keydown", e => {
 });
 addEventListener("keyup", e => keys.delete(e.key.toLowerCase()));
 const padHeld = new Set();
+// a long press on the pad must not select text or open the context menu
+document.getElementById("pad").addEventListener("contextmenu", e => e.preventDefault());
 document.querySelectorAll("#pad button").forEach(b => {
   const d = b.dataset.d;
   b.addEventListener("pointerdown", e => { e.preventDefault(); padHeld.add(d); b.setPointerCapture(e.pointerId); });
