@@ -1,0 +1,11 @@
+{
+  "tasks": {
+    "dev": "deno serve --allow-net --allow-read --allow-write --allow-env --watch ./router.ts",
+    "serve": "deno serve --allow-net --allow-read --allow-write --allow-env --port 8891 ./router.ts"
+  },
+  "imports": {
+    "@kuboon/kimimachi": "../packages/mapgen/src/mod.ts",
+    "@remix-run/fetch-router": "npm:@remix-run/fetch-router@0.18.2",
+    "@std/assert": "jsr:@std/assert@^1.0.19"
+  }
+}

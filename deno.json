@@ -1,0 +1,30 @@
+{
+  "workspace": [
+    "./packages/mapgen",
+    "./server"
+  ],
+  "tasks": {
+    "dev": "deno task --cwd server dev",
+    "test": "deno test -P",
+    "check": "deno check && deno lint && deno fmt --check"
+  },
+  "nodeModulesDir": "auto",
+  "fmt": {
+    "lineWidth": 140,
+    "exclude": [
+      "python/",
+      "server/viewer.html",
+      ".data/"
+    ]
+  },
+  "lint": {
+    "exclude": [
+      "python/",
+      ".data/"
+    ]
+  },
+  "exclude": [
+    "python/",
+    ".data/"
+  ]
+}
