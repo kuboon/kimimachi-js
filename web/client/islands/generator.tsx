@@ -1,11 +1,12 @@
 import { clientEntry, css, on } from "@remix-run/ui";
 import type { Handle } from "@remix-run/ui";
 
+import { gridCellAt } from "@kuboon/kimimachi/geo";
 import { defaultFetcher, reverseGeocode } from "@kuboon/kimimachi/geocode";
 
-import { deleteMap, getMap, listMaps, putMap } from "../db.ts";
+import { deleteMap, getMap, listMaps } from "../db.ts";
+import { generateCell, inJapan } from "../generate.ts";
 import type { MapSummary } from "../db.ts";
-import type { Message, Request } from "../worker.ts";
 import { color, radius } from "../tokens.ts";
 
 /** Named for what the server hands it: URLs only the server can work out. */
@@ -67,44 +68,6 @@ export const Generator = clientEntry(
         );
       });
 
-    /** Runs the generator in a Web Worker and stores the result. Resolves with the new map's id. */
-    const generate = (req: Request) =>
-      new Promise<string>((resolve, reject) => {
-        const worker = new Worker(handle.props.workerSrc, { type: "module" });
-        const lines: string[] = [];
-        worker.onmessage = async (e: MessageEvent<Message>) => {
-          const m = e.data;
-          if (m.type === "log") {
-            lines.push(m.text);
-            show(lines.join("\n"));
-            return;
-          }
-          worker.terminate();
-          if (m.type === "error") return reject(new Error(m.text));
-          const png = (b: Uint8Array) => new Blob([b as BlobPart], { type: "image/png" });
-          const id = crypto.randomUUID().replaceAll("-", "").slice(0, 12);
-          try {
-            await putMap({
-              id,
-              createdAt: Date.now(),
-              map: m.map,
-              tileset: png(m.tileset),
-              mapPng: png(m.mapPng),
-              abstractPng: png(m.abstractPng),
-              tmj: m.tmj,
-            });
-            resolve(id);
-          } catch (err) {
-            reject(err);
-          }
-        };
-        worker.onerror = (e) => {
-          worker.terminate();
-          reject(new Error(e.message || "生成に失敗しました"));
-        };
-        worker.postMessage(req);
-      });
-
     const field = (form: HTMLFormElement, name: string) => form.elements.namedItem(name) as HTMLInputElement;
 
     /**
@@ -150,15 +113,22 @@ export const Generator = clientEntry(
       void handle.update();
       try {
         const [lat, lon] = await getLatLon();
-        // the map sources (国土地理院 / PLATEAU) only cover Japan
-        if (lat < 20 || lat > 46 || lon < 122 || lon > 154) {
+        if (!inJapan(lat, lon)) {
           throw new Error("日本国内の位置を指定してください（地図データは国土地理院・PLATEAU のため）");
         }
-        const fd = new FormData(form);
-        const size = Math.max(300, Math.min(3000, Number(fd.get("size")) || 1500));
-        show("生成を始めます…（数秒〜数十秒かかります）");
-        const id = await generate({ lat, lon, size, title: String(fd.get("title") ?? "").trim().slice(0, 60) });
-        location.href = `${handle.props.viewerHref}#${id}`;
+        // the map is the grid cell containing the point; its neighbours are generated on demand in the viewer
+        const cell = gridCellAt(lat, lon);
+        const lines = ["生成を始めます…（数秒〜数十秒かかります）"];
+        show(lines.join("\n"));
+        const title = String(new FormData(form).get("title") ?? "").trim().slice(0, 60);
+        const rec = await generateCell(handle.props.workerSrc, cell.i, cell.j, {
+          title: title || undefined,
+          log: (text) => {
+            lines.push(text);
+            show(lines.join("\n"));
+          },
+        });
+        location.href = `${handle.props.viewerHref}#${rec.id}`;
       } catch (err) {
         show((err as Error).message, true);
         busy = false;
@@ -269,10 +239,6 @@ export const Generator = clientEntry(
             </button>
             <button type="submit" disabled={busy} mix={buttonStyle}>この座標で作る</button>
           </div>
-          <label mix={labelStyle}>
-            範囲 (m)
-            <input mix={inputStyle} name="size" type="number" defaultValue="1500" min="300" max="3000" step="100" />
-          </label>
         </form>
 
         {status ? <pre mix={[statusStyle, failed ? errorStyle : undefined]}>{status}</pre> : null}

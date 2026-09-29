@@ -4,7 +4,8 @@
   "license": "UNLICENSED",
   "exports": {
     ".": "./src/mod.ts",
-    "./geocode": "./src/geocode.ts"
+    "./geocode": "./src/geocode.ts",
+    "./geo": "./src/geo.ts"
   },
   "publish": {
     "include": [

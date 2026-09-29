@@ -20,7 +20,8 @@ export default function Home(handle: Handle<{ workerSrc: string }>) {
         処理はすべてこのブラウザの中で行われ、マップもこのブラウザにだけ保存されます。日本国内のみ。
       </p>
       <p mix={leadStyle}>
-        <a href="https://github.com/shi3z/kimimachi">shi3z/kimimachi</a> のフォークです。
+        <a href="https://github.com/shi3z/kimimachi">shi3z/kimimachi</a>{" "}
+        の Python 版を fork して TypeScript に書き換え、ブラウザ上ですべて生成するようにしました。
       </p>
       <Generator workerSrc={handle.props.workerSrc} viewerHref={routes.viewer.href()} />
     </>

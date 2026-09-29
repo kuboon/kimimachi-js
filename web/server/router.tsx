@@ -79,7 +79,7 @@ const pages = createController(routes, {
           stylesheets={[`${base}/static/viewer.css`]}
           bare
         >
-          <Viewer.default />
+          <Viewer.default workerSrc={workerSrc} />
         </Layout>,
       ),
   },

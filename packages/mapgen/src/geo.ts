@@ -79,3 +79,33 @@ export class Frame {
     return [lon0, lat0, lon1, lat1];
   }
 }
+
+/** Side of one grid cell [degrees]. Cells tile the plane on whole multiples of it. */
+export const GRID_DEG = 0.01;
+
+export interface GridCell {
+  /** column: `floor(lon / GRID_DEG)` (east +) */
+  i: number;
+  /** row: `floor(lat / GRID_DEG)` (north +) */
+  j: number;
+  /** centre of the cell */
+  lat: number;
+  lon: number;
+  /** ground size of the cell [m], for {@linkcode Frame} / `generateMap` */
+  width: number;
+  height: number;
+}
+
+/** The grid cell with column `i` and row `j`. Neighbouring cells share their edges exactly. */
+export function gridCell(i: number, j: number): GridCell {
+  const lon = (i + 0.5) * GRID_DEG;
+  const [, ySouth] = lonlatToMerc(lon, j * GRID_DEG), [, yNorth] = lonlatToMerc(lon, (j + 1) * GRID_DEG);
+  // the centre in Mercator, which is a hair off the middle latitude: a `Frame` is centred in Mercator too
+  const lat = mercToLonlat(lon, (ySouth + yNorth) / 2)[1];
+  const mPerUnit = EARTH_CIRC * Math.cos((lat * Math.PI) / 180);
+  return { i, j, lat, lon, width: (GRID_DEG / 360) * mPerUnit, height: (ySouth - yNorth) * mPerUnit };
+}
+
+/** The grid cell containing (lat, lon). */
+export const gridCellAt = (lat: number, lon: number): GridCell =>
+  gridCell(Math.floor(lon / GRID_DEG + 1e-9), Math.floor(lat / GRID_DEG + 1e-9));

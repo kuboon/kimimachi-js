@@ -4,6 +4,8 @@ import type { GameMap } from "@kuboon/kimimachi";
 export interface StoredMap {
   id: string;
   createdAt: number;
+  /** Which grid cell this is (`gridCell(i, j)`); absent on maps made before the grid. */
+  grid?: { i: number; j: number };
   map: GameMap & { kindColors: number[][] };
   /** PNG files */
   tileset: Blob;
