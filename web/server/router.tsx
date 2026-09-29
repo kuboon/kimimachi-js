@@ -16,6 +16,7 @@ import type { FileServerBehavior } from "@remix-kbn/ssg/site";
 import { stripBase } from "@remix-kbn/ssg/base";
 
 import { assets, assetsPath } from "./assets.ts";
+import { readMarkdownPage } from "./markdown.ts";
 import { clientRuntime, viewerRuntime, workerSrc } from "./runtime.ts";
 import { base } from "../client/base.ts";
 import { Layout } from "../client/layout.tsx";
@@ -58,12 +59,16 @@ const pages = createController(routes, {
           <Home.default workerSrc={workerSrc} />
         </Layout>,
       ),
-    about: (context) =>
-      context.render(
-        <Layout title={About.title} description={About.description} script={About.hydrate ? clientRuntime : null}>
-          <About.default />
+    about: async (context) => {
+      // Written in Markdown: `server/content/about.md`. Read on each request, so editing it in the
+      // dev server is a reload away; the build reads it once.
+      const page = await readMarkdownPage("about");
+      return context.render(
+        <Layout title={page.title} description={page.description} script={About.hydrate ? clientRuntime : null}>
+          <About.default body={page.body} />
         </Layout>,
-      ),
+      );
+    },
     viewer: (context) =>
       context.render(
         <Layout

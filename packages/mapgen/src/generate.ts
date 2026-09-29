@@ -3,6 +3,7 @@ import { abstract, BLOCKING_KINDS, buildingGroups, KINDS } from "./abstract.ts";
 import * as diagonal from "./diagonal.ts";
 import { type GameMap, KIND_COLORS, labelsToTiles, type MapMeta } from "./export.ts";
 import { Frame, type Pt } from "./geo.ts";
+import { type Address, reverseGeocode } from "./geocode.ts";
 import { defaultFetcher, type Fetcher } from "./net.ts";
 import * as R from "./raster.ts";
 import { type RailAxis, type RotateMode, Schematizer } from "./schematic.ts";
@@ -183,7 +184,7 @@ export async function generateMap(o: GenerateOptions): Promise<GeneratedMap> {
 
   let title = o.title;
   if (!title) {
-    title = (await plateau.reverseGeocode(fetcher, lat, lon).catch(() => ({}) as plateau.Address)).lv01Nm ||
+    title = (await reverseGeocode(fetcher, lat, lon).catch(() => ({}) as Address)).lv01Nm ||
       `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
   }
   const meta: MapMeta = {
