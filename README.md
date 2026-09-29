@@ -1,5 +1,7 @@
 # kimimachi — 現在地 → ピクセルゲームマップ
 
+[shi3z/kimimachi](https://github.com/shi3z/kimimachi) のフォークです。Python 実装をもとに、ブラウザだけで動く TypeScript / Remix 版にしています。
+
 ブラウザで現在地を取得すると、その場所の地図データから「抽象化した地図」を作り、16px
 タイルのゲームマップに変換して、歩き回れるビューアで開きます。
 

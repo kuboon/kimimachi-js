@@ -19,6 +19,9 @@ export default function Home(handle: Handle<{ workerSrc: string }>) {
         ブラウザで現在地を取得し、その場所の地図データからゲームマップを作ります。作ったマップは歩き回れます。
         処理はすべてこのブラウザの中で行われ、マップもこのブラウザにだけ保存されます。日本国内のみ。
       </p>
+      <p mix={leadStyle}>
+        <a href="https://github.com/shi3z/kimimachi">shi3z/kimimachi</a> のフォークです。
+      </p>
       <Generator workerSrc={handle.props.workerSrc} viewerHref={routes.viewer.href()} />
     </>
   );
