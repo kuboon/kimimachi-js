@@ -79,3 +79,19 @@ Deno.test("generateMap works with an empty data source", async () => {
   const img = renderMap(Int32Array.from(map.tileGrid), map.width, tileset);
   assertEquals([img.width, img.height], [800, 800]);
 });
+
+Deno.test("pad generates a wider area and crops it back to the requested size", async () => {
+  const opts = {
+    lat: 37.4463,
+    lon: 138.8514,
+    size: 400,
+    layout: "real",
+    source: "gsi",
+    title: "t",
+    fetch: () => Promise.resolve(null),
+  } as const;
+  const [a, b] = [await generateMap(opts), await generateMap({ ...opts, pad: 5 })];
+  assertEquals([b.map.width, b.map.height], [a.map.width, a.map.height]);
+  assertEquals(b.map.kindGrid.length, a.map.kindGrid.length);
+  assertEquals(b.map.meta.bounds, a.map.meta.bounds);
+});

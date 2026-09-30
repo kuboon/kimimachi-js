@@ -7,6 +7,8 @@ export interface Request {
   lon: number;
   size: number;
   height?: number;
+  layout?: "schematic" | "real";
+  pad?: number;
   title?: string;
 }
 
@@ -21,13 +23,15 @@ const ctx = self as unknown as {
 };
 
 ctx.onmessage = async (e) => {
-  const { lat, lon, size, height, title } = e.data;
+  const { lat, lon, size, height, layout, pad, title } = e.data;
   try {
     const { map, tileset } = await generateMap({
       lat,
       lon,
       size,
       height,
+      layout,
+      pad,
       title: title || undefined,
       log: (text) => ctx.postMessage({ type: "log", text }),
     });

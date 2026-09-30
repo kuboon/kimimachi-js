@@ -21,6 +21,12 @@ export interface GenerateOptions {
   size?: number;
   /** height of the area [m] (default = size) */
   height?: number;
+  /**
+   * Extra tiles generated around the area and cropped away afterwards (default 0). The tile
+   * rules look at neighbours, so without it the outermost tiles differ from what the neighbouring
+   * area gets: roads end in a cap, edges get straightened. Give the areas of a grid a few tiles.
+   */
+  pad?: number;
   /** distance one tile stands for [m] (default 8) */
   tileM?: number;
   /** "plateau": PLATEAU land use + roads (+ GSI buildings/rails), "gsi": GSI only */
@@ -68,19 +74,28 @@ export async function generateMap(o: GenerateOptions): Promise<GeneratedMap> {
     log = () => {},
   } = o;
   const height = o.height ?? size;
+  const pad = Math.max(0, Math.floor(o.pad ?? 0));
   const useDiagonal = o.diagonal ?? true;
   const schematic = layout === "schematic";
   let source = o.source ?? "plateau";
 
-  const frame = new Frame(lat, lon, size, height, tileM / SUBPX);
+  const inner = new Frame(lat, lon, size, height, tileM / SUBPX);
+  // the area actually generated: `pad` tiles wider on every side, same centre
+  const frame = pad ? new Frame(lat, lon, size + 2 * pad * tileM, height + 2 * pad * tileM, tileM / SUBPX) : inner;
   log(
-    `🗺  ${size.toFixed(0)}m x ${height.toFixed(0)}m, ${tileM}m/tile -> ${Math.floor(frame.W / SUBPX)} x ${
-      Math.floor(frame.H / SUBPX)
+    `🗺  ${size.toFixed(0)}m x ${height.toFixed(0)}m, ${tileM}m/tile -> ${Math.floor(inner.W / SUBPX)} x ${
+      Math.floor(inner.H / SUBPX)
     } tiles`,
   );
   // schematic mode reads a larger area so that rotation/warping never exposes empty corners
   const margin = schematic ? 1.5 : 1.0;
-  const src = new Frame(lat, lon, size * margin + (schematic ? 300 : 0), height * margin + (schematic ? 300 : 0), frame.mpp);
+  const src = new Frame(
+    lat,
+    lon,
+    frame.widthM * margin + (schematic ? 300 : 0),
+    frame.heightM * margin + (schematic ? 300 : 0),
+    frame.mpp,
+  );
   const rast = new R.Rasterizer(frame);
   const attributions: string[] = [];
 
@@ -179,8 +194,25 @@ export async function generateMap(o: GenerateOptions): Promise<GeneratedMap> {
   const overlay = overlayTiles(d.fam, d.col);
   const tileset = buildTileset(seed);
 
-  const { rows, cols } = d.kinds;
-  const labels = labelsToTiles(gsi.labels(gfeats, frame, tf?.transform), SUBPX, cols, rows);
+  let { rows, cols } = d.kinds;
+  let kindData = d.kinds.data, tileData = tiles, overlayData = overlay;
+  let labels = labelsToTiles(gsi.labels(gfeats, frame, tf?.transform), SUBPX, cols, rows);
+  if (pad) {
+    const [w, h] = [cols - 2 * pad, rows - 2 * pad];
+    const crop = <T extends Uint8Array | Int32Array>(a: T): T => {
+      const out = new (a.constructor as new (n: number) => T)(w * h);
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) out[y * w + x] = a[(y + pad) * cols + x + pad];
+      return out;
+    };
+    kindData = crop(kindData);
+    tileData = crop(tileData);
+    overlayData = crop(overlayData);
+    labels = labels
+      .map((l) => ({ ...l, tile: [l.tile[0] - pad, l.tile[1] - pad] as [number, number] }))
+      .filter((l) => l.tile[0] >= 0 && l.tile[1] >= 0 && l.tile[0] < w && l.tile[1] < h);
+    cols = w;
+    rows = h;
+  }
 
   let title = o.title;
   if (!title) {
@@ -192,7 +224,7 @@ export async function generateMap(o: GenerateOptions): Promise<GeneratedMap> {
     source,
     city,
     center: [Math.round(lat * 1e6) / 1e6, Math.round(lon * 1e6) / 1e6],
-    bounds: frame.boundsLonlat(),
+    bounds: inner.boundsLonlat(),
     tile_m: tileM,
     layout,
     attribution: attributions.join(" / "),
@@ -204,17 +236,17 @@ export async function generateMap(o: GenerateOptions): Promise<GeneratedMap> {
     tileSize: 16,
     kinds: [...KINDS],
     blockingKinds: [...BLOCKING_KINDS].map((k) => KINDS[k]).sort(),
-    kindGrid: Array.from(d.kinds.data),
-    tileGrid: Array.from(tiles),
-    overlayGrid: Array.from(overlay),
+    kindGrid: Array.from(kindData),
+    tileGrid: Array.from(tileData),
+    overlayGrid: Array.from(overlayData),
     labels,
   };
 
   const counts = new Array(KINDS.length).fill(0);
-  for (const k of d.kinds.data) counts[k]++;
+  for (const k of kindData) counts[k]++;
   log(
     "   " + counts.map((c, i) => [i, c] as const).filter(([, c]) => c).sort((a, b) => b[1] - a[1])
-      .map(([i, c]) => `${KINDS[i]} ${Math.round(c / d.kinds.data.length * 100)}%`).join(", "),
+      .map(([i, c]) => `${KINDS[i]} ${Math.round(c / kindData.length * 100)}%`).join(", "),
   );
   return { map, tileset, semantic };
 }

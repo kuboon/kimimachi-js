@@ -8,8 +8,8 @@ import type { Message } from "./worker.ts";
 /** Where the map sources (国土地理院 / PLATEAU) have data. */
 export const inJapan = (lat: number, lon: number) => lat >= 20 && lat <= 46 && lon >= 122 && lon <= 154;
 
-/** The id of a cell's map: one map per cell, so visiting a cell twice reuses it. */
-export const cellId = (i: number, j: number) => `c${i}_${j}`;
+/** The id of a cell's map: one map per cell (`g` for the real-shape layout; `c` was the schematic one), so visiting a cell twice reuses it. */
+export const cellId = (i: number, j: number) => `g${i}_${j}`;
 
 const png = (b: Uint8Array) => new Blob([b as BlobPart], { type: "image/png" });
 
@@ -55,7 +55,17 @@ export function generateCell(
       worker.terminate();
       reject(new Error(e.message || "生成に失敗しました"));
     };
-    worker.postMessage({ lat: c.lat, lon: c.lon, size: c.width, height: c.height, title: opts.title });
+    worker.postMessage({
+      lat: c.lat,
+      lon: c.lon,
+      size: c.width,
+      height: c.height,
+      // Neighbouring cells only join up with the real shapes: the schematic layout rotates and
+      // straightens every cell on its own. The padding gives the outermost tiles their neighbours.
+      layout: "real",
+      pad: 6,
+      title: opts.title,
+    });
   });
 }
 
