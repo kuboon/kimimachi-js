@@ -348,12 +348,15 @@ async function leaveThrough(d) {
 // Sizes are real ones (a 4.5 m car, the map's metres per tile), so one setting — the car's length on
 // screen — fixes the scale of everything: match the shadow to a real model car and the map is at its scale.
 const CAR_M = 4.5, CAR_W_M = 1.8, WHEELBASE_M = 2.7, MAX_STEER = 0.6; // rad
-const VMAX = 60 / 3.6, VBACK = 10 / 3.6, ACCEL = 3, BRAKE = 8, DRAG = 0.6, LAT_G = 5; // m/s, m/s²
+const VMAX = 60 / 3.6, VBACK = 10 / 3.6, ACCEL = 3, BRAKE = 12, DRAG = 0.6; // m/s, m/s²
+// keys and the on-screen wheel are all-or-nothing: they turn the wheel faster and grip harder than a stick,
+// which can be held part-way
+const STEER_RATE = { stick: 3, keys: 7 }, LAT_G = { stick: 5, keys: 8 }; // wheel turns/s, m/s²
 const CAR_Y = 0.62; // where the car sits, as a fraction of the screen's height
 const SCALE_MIN = 20, SCALE_MAX = 900; // car length, CSS px
 const PREF = "kimimachi.drive";
 const drive = {
-  on: false, heading: 0, v: 0, steer: 0,
+  on: false, heading: 0, v: 0, steer: 0, how: "keys",
   carPx: 120, look: "car", wake: null,
   ...JSON.parse(localStorage.getItem(PREF) || "{}"),
 };
@@ -427,16 +430,20 @@ function controls() {
   const k = keys, g = gamepad();
   const accel = Math.max(k.has("arrowup") || k.has("w") || pedalHeld.has("accel") ? 1 : 0, gpBtn(g, 7), gpBtn(g, 0));
   const brake = Math.max(k.has("arrowdown") || k.has("s") || k.has(" ") || pedalHeld.has("brake") ? 1 : 0, gpBtn(g, 6), gpBtn(g, 1), gpBtn(g, 2));
-  let steer = deadzone(g?.axes[0] ?? 0) + gpBtn(g, 15) - gpBtn(g, 14);
-  if (k.has("arrowleft") || k.has("a") || pedalHeld.has("left")) steer -= 1;
-  if (k.has("arrowright") || k.has("d") || pedalHeld.has("right")) steer += 1;
-  return { accel, brake, steer: Math.max(-1, Math.min(1, steer)) };
+  let steer = deadzone(g?.axes[0] ?? 0) + gpBtn(g, 15) - gpBtn(g, 14), keysSteer = false;
+  if (k.has("arrowleft") || k.has("a") || pedalHeld.has("left")) steer -= 1, keysSteer = true;
+  if (k.has("arrowright") || k.has("d") || pedalHeld.has("right")) steer += 1, keysSteer = true;
+  // which of the two last steered, kept while the wheel springs back
+  if (keysSteer) drive.how = "keys";
+  else if (steer !== 0) drive.how = "stick";
+  return { accel, brake, steer: Math.max(-1, Math.min(1, steer)), how: drive.how };
 }
 
 function driveUpdate(dt) {
   const c = controls(), tm = MAP.meta.tile_m;
-  // keys are all-or-nothing: ease the wheel toward them so a tap is a small turn
-  drive.steer += Math.max(-dt * 3, Math.min(dt * 3, c.steer - drive.steer));
+  // ease the wheel toward the input, so a tap of a key is a small turn
+  const rate = STEER_RATE[c.how] * dt;
+  drive.steer += Math.max(-rate, Math.min(rate, c.steer - drive.steer));
   let v = drive.v;
   if (c.accel > 0) v += (v < 0 ? BRAKE : ACCEL) * c.accel * dt;
   if (c.brake > 0) {
@@ -448,7 +455,7 @@ function driveUpdate(dt) {
   v = Math.max(-VBACK, Math.min(VMAX, v));
   // bicycle model: the turning rate follows the speed, so a standing car does not spin;
   // capped by the grip (LAT_G), so full lock at speed is a curve, not a spin
-  const yaw = v / WHEELBASE_M * Math.tan(drive.steer * MAX_STEER), yawMax = LAT_G / Math.max(1, Math.abs(v));
+  const yaw = v / WHEELBASE_M * Math.tan(drive.steer * MAX_STEER), yawMax = LAT_G[c.how] / Math.max(1, Math.abs(v));
   drive.heading += Math.max(-yawMax, Math.min(yawMax, yaw)) * dt;
   const fx_ = Math.sin(drive.heading), fy = -Math.cos(drive.heading);
   const step = v * dt / tm;
