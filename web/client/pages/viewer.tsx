@@ -9,8 +9,11 @@ export const title = "ピクセルマップ — kimimachi";
  */
 export const hydrate = false;
 
-/** `viewport-fit=cover`, so `env(safe-area-inset-*)` means something on a phone with a notch. */
-export const viewport = "width=device-width, initial-scale=1, viewport-fit=cover";
+/**
+ * `viewport-fit=cover`, so `env(safe-area-inset-*)` means something on a phone with a notch.
+ * No zooming: it is a game screen (with `touch-action` in viewer.css; iOS Safari ignores `user-scalable` in a tab).
+ */
+export const viewport = "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover";
 
 /** `workerSrc` is where the generator worker lives: walking off the map's edge generates the next block. */
 export default function Viewer(handle: Handle<{ workerSrc: string }>) {

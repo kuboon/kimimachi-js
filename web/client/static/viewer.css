@@ -18,7 +18,15 @@ canvas {
   display: block;
   image-rendering: pixelated;
 }
+/* a game screen, not a page: no double-tap zoom anywhere (iPad Safari zooms on a quick second tap),
+   and no pinch or pan on the map */
+*,
+html,
+body {
+  touch-action: manipulation;
+}
 #game {
+  touch-action: none;
   position: fixed;
   inset: 0;
   width: 100vw;
