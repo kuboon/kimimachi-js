@@ -347,11 +347,11 @@ async function leaveThrough(d) {
 // ---- ドライブモード: the car stays put, heading up; the map turns under it
 // Sizes are real ones (a 4.5 m car, the map's metres per tile), so one setting — the car's length on
 // screen — fixes the scale of everything: match the shadow to a real model car and the map is at its scale.
-const CAR_M = 4.5, CAR_W_M = 1.8, WHEELBASE_M = 2.7, MAX_STEER = 0.6; // rad
+const CAR_M = 4.5, CAR_W_M = 1.8, MIN_R = 5; // m; MIN_R: the turning radius at full lock
 const VMAX = 60 / 3.6, VBACK = 10 / 3.6, ACCEL = 3, BRAKE = 12, DRAG = 0.6; // m/s, m/s²
-// keys and the on-screen wheel are all-or-nothing: they turn the wheel faster and grip harder than a stick,
-// which can be held part-way
-const STEER_RATE = { stick: 3, keys: 7 }, LAT_G = { stick: 5, keys: 8 }; // wheel turns/s, m/s²
+// how fast the wheel follows the input (full lock per second): a stick is the wheel itself;
+// keys and the on-screen wheel are all-or-nothing, so they turn it over a moment and a tap is a small turn
+const STEER_RATE = { stick: 12, keys: 7 };
 const CAR_Y = 0.62; // where the car sits, as a fraction of the screen's height
 const SCALE_MIN = 20, SCALE_MAX = 900; // car length, CSS px
 const PREF = "kimimachi.drive";
@@ -441,7 +441,6 @@ function controls() {
 
 function driveUpdate(dt) {
   const c = controls(), tm = MAP.meta.tile_m;
-  // ease the wheel toward the input, so a tap of a key is a small turn
   const rate = STEER_RATE[c.how] * dt;
   drive.steer += Math.max(-rate, Math.min(rate, c.steer - drive.steer));
   let v = drive.v;
@@ -453,10 +452,9 @@ function driveUpdate(dt) {
   }
   if (!c.accel && !c.brake) v -= Math.sign(v) * Math.min(Math.abs(v), DRAG * dt);
   v = Math.max(-VBACK, Math.min(VMAX, v));
-  // bicycle model: the turning rate follows the speed, so a standing car does not spin;
-  // capped by the grip (LAT_G), so full lock at speed is a curve, not a spin
-  const yaw = v / WHEELBASE_M * Math.tan(drive.steer * MAX_STEER), yawMax = LAT_G[c.how] / Math.max(1, Math.abs(v));
-  drive.heading += Math.max(-yawMax, Math.min(yawMax, yaw)) * dt;
+  // the wheel sets the curvature (1 / radius), whatever the speed: the car turns by distance / radius,
+  // so the same wheel draws the same circle fast or slow, and a standing car does not turn
+  drive.heading += v * dt * drive.steer / MIN_R;
   const fx_ = Math.sin(drive.heading), fy = -Math.cos(drive.heading);
   const step = v * dt / tm;
   const nx = player.px + fx_ * step, ny = player.py + fy * step;
