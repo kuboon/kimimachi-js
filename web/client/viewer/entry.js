@@ -34,9 +34,18 @@ addEventListener("resize", resize); resize();
 // ---- minimap (1px per tile)
 const miniBase = document.createElement("canvas");
 let MS = 1;
+// tapping the minimap switches it between large and small; the choice is kept
+const MINI_PREF = "kimimachi.mini";
+let miniSmall = localStorage.getItem(MINI_PREF) === "small";
+mini.addEventListener("click", () => {
+  miniSmall = !miniSmall;
+  localStorage.setItem(MINI_PREF, miniSmall ? "small" : "large");
+  sizeMini();
+});
 function sizeMini() {
-  // about a third of the screen, up to 360px on the long side
-  const target = Math.min(360, Math.max(160, Math.min(innerWidth, innerHeight) * 0.45));
+  // large: about a third of the screen, up to 360px on the long side; small: about a sixth, up to 140px
+  const short = Math.min(innerWidth, innerHeight);
+  const target = miniSmall ? Math.min(140, Math.max(80, short * 0.18)) : Math.min(360, Math.max(160, short * 0.45));
   MS = target / Math.max(COLS, ROWS);
   const dpr = devicePixelRatio || 1;
   mini.width = Math.round(COLS * MS * dpr); mini.height = Math.round(ROWS * MS * dpr);

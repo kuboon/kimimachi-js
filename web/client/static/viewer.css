@@ -55,6 +55,7 @@ body {
   font-size: 11px;
 }
 #mini {
+  cursor: pointer;
   position: fixed;
   right: 12px;
   top: 12px;

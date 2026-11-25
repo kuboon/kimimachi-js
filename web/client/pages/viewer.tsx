@@ -20,7 +20,7 @@ export default function Viewer(handle: Handle<{ workerSrc: string }>) {
   return () => (
     <>
       <canvas id="game"></canvas>
-      <canvas id="mini"></canvas>
+      <canvas id="mini" title="タップで大きさを切り替え"></canvas>
       <div class="hud" id="hud"></div>
       <div class="help" id="help">矢印/WASD: 移動　Shift: 走る　M: ミニマップ　+/-: ズーム　C: ドライブ</div>
       <div class="attr" id="attr"></div>
